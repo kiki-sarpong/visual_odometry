@@ -15,8 +15,8 @@ class LoadData{
         // Call Destructor
         ~LoadData();
 
-        std::vector<Eigen::MatrixXd> load_homogeneous_matrix(std::string& file_path, std::string& name);
-        std::vector<double> load_timestamp();
+        std::vector<Eigen::MatrixXd> load_homogeneous_matrix(std::string& file_path, std::string name = "none");
+        std::vector<double> load_timestamps(std::string& file_path);
 
     private:
         int row_4 = 4;

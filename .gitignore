@@ -10,3 +10,4 @@ vio_workspace/src/sequences_dataset
 /vio_workspace/install
 
 .vscode/
+/vio_workspace/COLCON_IGNORE

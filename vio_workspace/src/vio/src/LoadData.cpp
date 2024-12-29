@@ -17,8 +17,8 @@ This is a method to load a 4 x 4 homogeous matrix
 input: file_path
 returns: A vector of matrices
 */
-std::vector<Eigen::MatrixXd> LoadData::load_homogeneous_matrix(std::string& file_path, std::string& name){
-    // Create input stream file object
+std::vector<Eigen::MatrixXd> LoadData::load_homogeneous_matrix(std::string& file_path, std::string name){
+    // Create input-file stream object
     std::ifstream file(file_path);
 
     // Assign matrix size
@@ -29,14 +29,13 @@ std::vector<Eigen::MatrixXd> LoadData::load_homogeneous_matrix(std::string& file
     
     // Check if file can be opened
     if(!file.is_open()){
-        std::cerr << "File path could not be opened. Exiting ...\n";
+        std::cerr <<  "File  "<<  file_path <<" could not be opened. Exiting ...\n";
         return matrix_vector;
     }
     
-
     // Read line
     std::string line;
-    while(std::getline(file,line)){
+    while(std::getline(file, line)){
         // std::cout << line << "\n";
 
         // Use a stringstream to parse the values
@@ -70,4 +69,41 @@ std::vector<Eigen::MatrixXd> LoadData::load_homogeneous_matrix(std::string& file
     file.close();
 
     return matrix_vector;
+}
+
+
+/*
+This is a method to load the timestamps from a file
+input: file_path
+returns: 1D vector of timestamps
+*/
+std::vector<double> LoadData::load_timestamps(std::string& file_path){
+    // Load file into input-file stream object
+    std::ifstream file(file_path);
+
+    // Assign timestamp vector
+    std::vector<double> timestamps;
+
+    // Check if file can be opened
+    if(!file.is_open()){
+        std::cerr <<  "File  "<<  file_path <<" could not be opened. Exiting ...\n";
+        return timestamps;
+    }
+
+    // Read line
+    std::string line;
+    while(std::getline(file, line)){
+        // Use stringstream to parse line
+        std::stringstream ss(line);
+        double element;
+
+        // For the timestamps, every line in the file has only one timestamp
+        // Put the timestamp into a 1D vector
+        while(ss >> element){timestamps.emplace_back(element);}
+    }
+
+    for(double& k:timestamps){
+        std::cout << k << "\n";
+    }
+    return timestamps;
 }
