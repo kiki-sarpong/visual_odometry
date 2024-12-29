@@ -1,0 +1,37 @@
+services:
+  vio-odometry:
+    build:
+      context: ./docker
+      dockerfile: vio.dockerfile
+      target: dev-ws
+
+    image: vio_dev
+    container_name: vio
+
+    command: tail -f /dev/null
+    environment:
+      - DISPLAY=novnc:0.0
+    volumes:
+      - ./vio_workspace:/home/vio_dev/vio_workspace
+      - vnc_home:/home
+    networks:
+      - x11
+
+  #VNC image
+  novnc:
+    image: theasp/novnc:latest
+    container_name: novnc
+    env_file:
+      - novnc.env
+    ports:
+      - "8080:8080"
+    networks:
+      - x11
+    volumes:
+      - vnc_home:/home
+
+networks:
+  x11:
+
+volumes:
+  vnc_home: # setup persistent volume

@@ -1,0 +1,2 @@
+# Ignore OS-specific files (macOS, Windows, Linux)
+.DS_Store

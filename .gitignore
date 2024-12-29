@@ -1,0 +1,12 @@
+vio_workspace/src/dataset
+vio_workspace/src/devkit
+vio_workspace/src/poses_dataset
+vio_workspace/src/sequences_dataset
+
+.DS_Store
+
+/vio_workspace/build
+/vio_workspace/log
+/vio_workspace/install
+
+.vscode/
