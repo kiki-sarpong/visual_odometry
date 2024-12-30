@@ -13,7 +13,7 @@ services:
       - DISPLAY=novnc:0.0
     volumes:
       - ./vio_workspace:/home/vio_dev/vio_workspace
-      - vnc_home:/home
+      # - vnc_home:/home
     networks:
       - x11
 
