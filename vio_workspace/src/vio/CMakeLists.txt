@@ -8,6 +8,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(std_msgs REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(Eigen3 REQUIRED)
 # find_package(cv_bridge REQUIRED)
@@ -22,19 +23,31 @@ include_directories(
 # target_include_directories() 
 
 
-add_executable(run_vio src/run_vio.cpp src/LoadData.cpp)
+add_executable(visual_odometry 
+src/main.cpp
+src/LoadData.cpp
+#src/VisualOdometry.cpp
+src/VisualOdometryPublisher.cpp
+src/GroundTruthPublisher.cpp
+)
 
+add_executable(test_cpp src/test_cpp.cpp)
+
+# First entry is the executable, the rest are dependencies
 ament_target_dependencies(
-run_vio 
-rclcpp 
-std_msgs 
+visual_odometry
+rclcpp
+std_msgs
+geometry_msgs
 OpenCV
 Eigen3
 )
 
+ament_target_dependencies(test_cpp rclcpp std_msgs)
 # Include executable targets
 install(TARGETS
-run_vio
+visual_odometry
+test_cpp
 DESTINATION lib/${PROJECT_NAME}
 )
 

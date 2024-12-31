@@ -144,12 +144,11 @@ std::vector<std::string> LoadData::load_images(std::string& file_path, int numbe
 
         // Image names are 000000.png , 0000001.png .... 000100.png, etc
         name = std::to_string(prefix+file_count);
-        // Remove the '1' at the beginning of th number. 1000001 = 000001
+        // Remove the '1' at the beginning of the number. 1000001 = 000001
         name = file_path + name.substr(1,name.length() - 1) + post_fix;  
-        std::cout << name << "\n";
+        // std::cout << name << "\n";
 
         vector_of_image_paths.emplace_back(name);
-
 
         file_count +=1;  // Increment file_count
     }
