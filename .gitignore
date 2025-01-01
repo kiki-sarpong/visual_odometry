@@ -4,6 +4,7 @@ vio_workspace/src/poses_dataset
 vio_workspace/src/sequences_dataset
 
 .DS_Store
+*.notes
 
 /vio_workspace/build
 /vio_workspace/log

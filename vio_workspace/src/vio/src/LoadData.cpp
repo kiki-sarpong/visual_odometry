@@ -63,8 +63,8 @@ std::vector<Eigen::MatrixXd> LoadData::load_homogeneous_matrix(std::string& file
         homogeneous_matrix(row_4-1, col_4-1) = 1;
 
         matrix_vector.emplace_back(homogeneous_matrix);
-        std::cout << homogeneous_matrix << "\n";
-        std::cout << "------------------\n";
+        // std::cout << homogeneous_matrix << "\n";
+        // std::cout << "------------------\n";
 
     }
 
@@ -104,9 +104,9 @@ std::vector<double> LoadData::load_timestamps(std::string& file_path){
         while(ss >> element){timestamps.emplace_back(element);}
     }
 
-    for(double& k:timestamps){
-        std::cout << k << "\n";
-    }
+    // for(double& k:timestamps){
+    //     std::cout << k << "\n";
+    // }
     return timestamps;
 }
 

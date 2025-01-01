@@ -26,7 +26,7 @@ include_directories(
 add_executable(visual_odometry 
 src/main.cpp
 src/LoadData.cpp
-#src/VisualOdometry.cpp
+src/VisualOdometry.cpp
 src/VisualOdometryPublisher.cpp
 src/GroundTruthPublisher.cpp
 )

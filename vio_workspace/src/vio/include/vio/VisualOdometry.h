@@ -6,9 +6,12 @@
 
 class VisualOdometry : public rclcpp::Node {
     public:
+        // call Constructor
+        VisualOdometry();
+        void run_visual_odometry();
 
-
-
+        // call Destructor
+        ~VisualOdometry();
 
     private:
 
