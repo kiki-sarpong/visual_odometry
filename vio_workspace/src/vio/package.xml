@@ -14,6 +14,7 @@
   <depend>rclcpp</depend>
   <depend>OpenCV</depend>
   <depend>cv_bridge</depend>
+  <depend>tf2</depend>
   <depend>Eigen</depend>
   <!-- <depend>image_transport</depend> -->
 

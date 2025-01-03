@@ -1,12 +1,6 @@
-#include <iostream>
-#include <string>
 #include <eigen3/Eigen/Core>
-#include <opencv2/opencv.hpp>
 #include <opencv2/features2d.hpp>
-#include <opencv2/highgui.hpp>
-#include <opencv2/imgproc.hpp>
 #include <opencv2/core/eigen.hpp>
-#include "rclcpp/rclcpp.hpp"
 #include "LoadData.h"
 #include "GroundTruthPublisher.h"
 #include "VisualOdometryPublisher.h"
@@ -44,6 +38,9 @@ void VisualOdometry::run_visual_odometry(){
     RCLCPP_INFO(this->get_logger(), "Loaded ground truth data ....");
     std::vector<double> timestamps = data.load_timestamps(timestamp_file);
     RCLCPP_INFO(this->get_logger(), "Loaded timestamp data ....");
+
+    // Initialize publishers
+    VisualOdometryPublisher vo_pub;
     
 
     int number_of_images = 4;
@@ -65,20 +62,6 @@ void VisualOdometry::run_visual_odometry(){
 
     // create ORB detector
     cv::Ptr<cv::ORB> orb = cv::ORB::create();
-    cv::FlannBasedMatcher flannMatcher; // Use the flann based matcher
-
-    // Create keypoints
-    std::vector<cv::KeyPoint> prev_keypoints, curr_keypoints;
-    // Create descriptors
-    cv::Mat prev_descriptors, curr_descriptors;
-    std::vector<cv::DMatch> matches;  // Get matches
-    std::vector<cv::DMatch> good_matches;  // Get good matches
-
-    // Create prev_q and curr_q using the good matches
-    std::vector<cv::Point2f> prev_q, curr_q;
-    cv::Mat essentialMatrix, Rotation, Trans, triangulated_points;  // Initialize essential matrix, rotation and translation
-    cv::Mat prev_R_and_T, curr_R_and_T;
-    std::vector<uchar> mask;  // Initialize mask
 
     // Initialize rotation and translation
     cv::Mat prev_Rotation = cv::Mat::eye(3, 3, CV_64F); // Identity matrix
@@ -137,14 +120,17 @@ void VisualOdometry::run_visual_odometry(){
         // Create 3 x 4 matrix from rotation and translation
         prev_R_and_T = VisualOdometry::create_R_and_T_matrix(prev_Rotation, prev_Trans);
         curr_R_and_T = VisualOdometry::create_R_and_T_matrix(Rotation, Trans);
+        // Get projection matrix by Intrisics x [R|t]
         cv::Mat prev_projection_matrix = left_camera_K * prev_R_and_T;
         cv::Mat curr_projection_matrix = left_camera_K * curr_R_and_T;
 
         // Triangulate points 2D points to 3D
         cv::triangulatePoints(prev_projection_matrix, curr_projection_matrix, prev_q, curr_q, triangulated_points);
+
+        vo_pub.call_publisher(prev_Rotation, prev_Trans);  // Call publisher
         
-        std::cout << triangulated_points << "\n";
-        std::cout << " ----------------\n";
+        // std::cout << triangulated_points << "\n";
+        // std::cout << " ----------------\n";
 
         // Update previous image
         prev_image = curr_image;

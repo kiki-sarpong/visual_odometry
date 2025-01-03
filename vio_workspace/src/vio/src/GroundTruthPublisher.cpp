@@ -1,6 +1,5 @@
-#include <iostream>
-#include "rclcpp/rclcpp.hpp"
-#include "geometry_msgs/msg/transform_stamped.hpp"
+// #include "geometry_msgs/msg/transform_stamped.hpp"
+#include "std_msgs/msg/header.hpp"
 #include "GroundTruthPublisher.h"
 
 std::string gt_node_name = "ground_truth_publisher";
@@ -19,6 +18,6 @@ GroundTruthPublisher::GroundTruthPublisher() : Node(gt_node_name){
 }
 
 
-void GroundTruthPublisher::call_publisher(){
-    std::cout << "Publisher has been called!\n";
+void GroundTruthPublisher::call_publisher(cv::Mat& rotation_n_translation){
+
 }

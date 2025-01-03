@@ -1,5 +1,3 @@
-
-#include <eigen3/Eigen/Core>
 #include <fstream>
 #include <sstream>
 #include <string>

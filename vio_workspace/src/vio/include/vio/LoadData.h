@@ -2,9 +2,6 @@
 #define _LOAD_DATA_H
 
 #include <eigen3/Eigen/Core>
-#include <fstream>
-#include <sstream>
-#include <string>
 
 
 class LoadData{
