@@ -23,8 +23,17 @@ std::vector<Eigen::MatrixXd> LoadData::load_homogeneous_matrix(std::string& file
     // Create input-file stream object
     std::ifstream file(file_path);
 
+    Eigen::MatrixXd homogeneous_matrix;
+
     // Assign matrix size
-    Eigen::MatrixXd homogeneous_matrix = Eigen::MatrixXd(row_4, col_4);
+    if (name == "calib"){ // projection matrix is a 3 x 4 matrix
+        row = 3;
+        homogeneous_matrix = Eigen::MatrixXd(row, col);
+    }
+    else{
+        row = 4;
+        homogeneous_matrix = Eigen::MatrixXd(row, col);
+    }
 
     // Create a vector to hold the 4 homogeneous matrices
     std::vector<Eigen::MatrixXd> matrix_vector; 
@@ -57,10 +66,10 @@ std::vector<Eigen::MatrixXd> LoadData::load_homogeneous_matrix(std::string& file
             // Assign element to matrix location
             homogeneous_matrix(rw, cl) = element; 
             cl ++;
-            if (cl == col_4){cl = 0; rw++;}  // Move to next row
+            if (cl == col){cl = 0; rw++;}  // Move to next row
         }
         // The last element of the matrix must be set to 1. Matrix is a homogeneous matrix
-        homogeneous_matrix(row_4-1, col_4-1) = 1;
+        homogeneous_matrix(row-1, col-1) = 1;
 
         matrix_vector.emplace_back(homogeneous_matrix);
         // std::cout << homogeneous_matrix << "\n";

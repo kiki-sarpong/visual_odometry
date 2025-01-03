@@ -22,6 +22,8 @@ include_directories(
 )
 # target_include_directories() 
 
+# This is used to solve an error based on using cv::eigen2cv
+add_definitions(-DOPENCV_DISABLE_EIGEN_TENSOR_SUPPORT)
 
 add_executable(visual_odometry 
 src/main.cpp

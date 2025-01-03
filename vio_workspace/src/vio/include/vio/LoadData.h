@@ -20,8 +20,8 @@ class LoadData{
         std::vector<std::string> load_images(std::string& file_path, int number_to_load = -1);
 
     private:
-        int row_4 = 4;
-        int col_4 = 4;
+        int row = 4;
+        int col = 4;
 };
 
 #endif /* _LOAD_DATA_H */
