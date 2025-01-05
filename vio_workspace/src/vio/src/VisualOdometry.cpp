@@ -42,8 +42,7 @@ void VisualOdometry::run_visual_odometry(){
     // Initialize publishers
     VisualOdometryPublisher vo_pub;
     
-
-    int number_of_images = 4;
+    int number_of_images = 20;
     int& image_iter_size = number_of_images;
     std::vector<std::string> left_images = data.load_images(left_images_dir, number_of_images);
 

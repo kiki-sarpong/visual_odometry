@@ -27,7 +27,7 @@ frame id based on a counter.
  void VisualOdometryPublisher::call_publisher(cv::Mat& Rotation, cv::Mat& Translation){
     auto msg = geometry_msgs::msg::TransformStamped(); // Create transform stamped msg
     msg.header.stamp = this->get_clock()->now();
-    msg.header.frame_id = base_link;
+    msg.header.frame_id = map;
     // Make every child frame id unique 
     msg.child_frame_id = id_name + std::to_string(count);
     msg.transform.translation.x = Translation.at<double>(0);

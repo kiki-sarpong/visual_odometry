@@ -5,6 +5,7 @@ vio_workspace/src/sequences_dataset
 
 .DS_Store
 *.notes
+*.env
 
 /vio_workspace/build
 /vio_workspace/log

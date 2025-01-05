@@ -17,7 +17,7 @@ class VisualOdometryPublisher : public rclcpp::Node {
     private:
         rclcpp::Publisher<geometry_msgs::msg::TransformStamped>::SharedPtr vo_publisher;
         static const int qos_depth = 10;
-        std::string base_link = "base_link";
+        std::string map = "map";
         std::string id_name = "frame_";
         float count = 0.01;
 
