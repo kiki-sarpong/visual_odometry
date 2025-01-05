@@ -12,9 +12,9 @@ find_package(geometry_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(tf2 REQUIRED)
+find_package(tf2_msgs REQUIRED)
 # find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
-# find_package(image_transport REQUIRED)
 
 include_directories(
   include
@@ -30,8 +30,7 @@ add_executable(visual_odometry
 src/main.cpp
 src/LoadData.cpp
 src/VisualOdometry.cpp
-src/VisualOdometryPublisher.cpp
-src/GroundTruthPublisher.cpp
+src/OdometryPublisher.cpp
 )
 
 add_executable(test_cpp src/test_cpp.cpp)
@@ -43,6 +42,7 @@ rclcpp
 std_msgs
 geometry_msgs
 tf2
+tf2_msgs
 OpenCV
 Eigen3
 )

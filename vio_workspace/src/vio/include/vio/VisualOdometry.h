@@ -10,7 +10,7 @@
 class VisualOdometry : public rclcpp::Node {
     public:
         // Call Constructor
-        VisualOdometry();
+        VisualOdometry(std::shared_ptr<OdometryPublisher>& odom_node_);
         void run_visual_odometry();
         cv::Mat decompose_matrix(cv::Mat& projection_matrix);
         cv::Mat eigen_to_cv(Eigen::MatrixXd& eigen_matrix);
@@ -35,6 +35,7 @@ class VisualOdometry : public rclcpp::Node {
         cv::Mat essentialMatrix, Rotation, Trans, triangulated_points;  // Initialize essential matrix, rotation and translation
         cv::Mat prev_R_and_T, curr_R_and_T;
         std::vector<uchar> mask;  // Initialize mask
+        std::shared_ptr<OdometryPublisher> odom_node; // Create a shared ptr for the node
 
 };
 

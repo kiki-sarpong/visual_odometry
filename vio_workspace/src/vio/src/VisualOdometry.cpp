@@ -2,12 +2,11 @@
 #include <opencv2/features2d.hpp>
 #include <opencv2/core/eigen.hpp>
 #include "LoadData.h"
-#include "GroundTruthPublisher.h"
-#include "VisualOdometryPublisher.h"
+#include "OdometryPublisher.h"
 #include "VisualOdometry.h"
 
 // Constructor
-VisualOdometry::VisualOdometry() : Node("visual_odometry"){
+VisualOdometry::VisualOdometry(std::shared_ptr<OdometryPublisher>& odom_node_) : Node("visual_odometry"), odom_node(odom_node_){
     run_visual_odometry();
 };
 
@@ -40,9 +39,10 @@ void VisualOdometry::run_visual_odometry(){
     RCLCPP_INFO(this->get_logger(), "Loaded timestamp data ....");
 
     // Initialize publishers
-    VisualOdometryPublisher vo_pub;
+    // OdometryPublisher vo_pub;
+
     
-    int number_of_images = 20;
+    int number_of_images = -1;
     int& image_iter_size = number_of_images;
     std::vector<std::string> left_images = data.load_images(left_images_dir, number_of_images);
 
@@ -126,7 +126,8 @@ void VisualOdometry::run_visual_odometry(){
         // Triangulate points 2D points to 3D
         cv::triangulatePoints(prev_projection_matrix, curr_projection_matrix, prev_q, curr_q, triangulated_points);
 
-        vo_pub.call_publisher(prev_Rotation, prev_Trans);  // Call publisher
+        // Call publisher node to publish points
+        odom_node->call_publisher(prev_Rotation, prev_Trans);
         
         // std::cout << triangulated_points << "\n";
         // std::cout << " ----------------\n";
