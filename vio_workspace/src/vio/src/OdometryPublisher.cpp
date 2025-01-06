@@ -1,5 +1,6 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
-#include "geometry_msgs/msg/pose_stamped.hpp"
+#include "geometry_msgs/msg/pose_array.hpp"
+#include "geometry_msgs/msg/pose.hpp"
 // #include "tf2_msgs/msg/tf_message.hpp"
 #include "std_msgs/msg/header.hpp"
 #include "OdometryPublisher.h"
@@ -14,49 +15,45 @@ OdometryPublisher::OdometryPublisher() : Node("odometry_publisher"){
     qos_profile.durability_volatile();  // Retain last message
     std::string topic_name = "odometry_publisher";
 
-    odometry_publisher = this->create_publisher<geometry_msgs::msg::PoseStamped>(topic_name, qos_profile);
+    odometry_publisher = this->create_publisher<geometry_msgs::msg::PoseArray>(topic_name, qos_profile);
     RCLCPP_INFO(this->get_logger(), (topic_name + " has started.").c_str());
 }
 
 
 /*
 This method calls the visual odometry publisher.
-It publishes a transform stamped msg, and gives every new message a unique
-frame id based on a counter.
 */
- void OdometryPublisher::call_publisher(cv::Mat& Rotation, cv::Mat& Translation){
-    // auto tf2_msg = tf2_msgs::msg::TFMessage(); // Create tf2_msg
-    auto geo_msg = geometry_msgs::msg::PoseStamped(); // Create transform stamped msg
-    geo_msg.header.stamp = this->get_clock()->now();
-    geo_msg.header.frame_id = map;
-    // // Make every child frame id unique 
-    // geo_msg.child_frame_id = id_name + std::to_string(count);
-    // geo_msg.transform.translation.x = Translation.at<double>(0);
-    // geo_msg.transform.translation.y = Translation.at<double>(1);
-    // geo_msg.transform.translation.z = Translation.at<double>(2);
+ void OdometryPublisher::call_publisher(cv::Mat& matrix_RT){
+    auto pose_array_msg = geometry_msgs::msg::PoseArray(); 
+    pose_array_msg.header.stamp = this->get_clock()->now();
+    pose_array_msg.header.frame_id = map;
 
-    // tf2::Quaternion quaternion = OdometryPublisher::rot_to_quaternion(Rotation);
-    // geo_msg.transform.rotation.x = quaternion.x();
-    // geo_msg.transform.rotation.y = quaternion.y();
-    // geo_msg.transform.rotation.z = quaternion.z();
-    // geo_msg.transform.rotation.w = quaternion.w();
+    // Get Rotation and Translation from matrix_RT
+    cv::Mat Rotation = matrix_RT(cv::Range(0, 3), cv::Range(0, 3));
+    cv::Mat Translation = matrix_RT(cv::Range(0, 3), cv::Range(3, 4));
 
-    geo_msg.pose.position.x = Translation.at<double>(0);
-    geo_msg.pose.position.y = Translation.at<double>(1);
-    geo_msg.pose.position.z = Translation.at<double>(2);
+    auto p_msg = geometry_msgs::msg::Pose();
+
+    p_msg.position.x = Translation.at<double>(0);
+    p_msg.position.y = Translation.at<double>(2);
+    p_msg.position.z = Translation.at<double>(1);
 
     tf2::Quaternion quaternion = OdometryPublisher::rot_to_quaternion(Rotation);
-    geo_msg.pose.orientation.x = quaternion.x();
-    geo_msg.pose.orientation.y = quaternion.y();
-    geo_msg.pose.orientation.z = quaternion.z();
-    geo_msg.pose.orientation.w = quaternion.w();
+    p_msg.orientation.x = quaternion.x();
+    p_msg.orientation.y = quaternion.y();
+    p_msg.orientation.z = quaternion.z();
+    p_msg.orientation.w = quaternion.w();
 
-    // tf2_msg.transforms = geo_msg;
+    pose_vector.emplace_back(p_msg);
 
+    pose_array_msg.poses = pose_vector;
     // Publish message
-    odometry_publisher->publish(geo_msg);
+    odometry_publisher->publish(pose_array_msg);
+    // RCLCPP_INFO(this->get_logger(), std::to_string(pose_vector.size()).c_str());
+    // std::cout <<p_msg.position.x << "   " << p_msg.position.y << " \n";
+    std::cout << matrix_RT  << " \n";
 
-    count += 0.01;  // Increment count
+    // count += 0.01;  // Increment count
    
 }
 

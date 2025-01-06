@@ -27,8 +27,8 @@ int main(int argc, char** argv) {
 
     // Spin the executor
     executor.spin();
-
     // Shutdown ROS2 node
     rclcpp::shutdown();
+
     return 0;
 }

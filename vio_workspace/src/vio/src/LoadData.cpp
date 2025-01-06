@@ -13,25 +13,15 @@ LoadData::LoadData(){};
 LoadData::~LoadData(){};
 
 /*
-This is a method to load a 4 x 4 homogeous matrix
+This is a method to load a 3 x 4 matrix
 input: file_path
 returns: A vector of matrices
 */
-std::vector<Eigen::MatrixXd> LoadData::load_homogeneous_matrix(std::string& file_path, std::string name){
+std::vector<Eigen::MatrixXd> LoadData::load_matrix(std::string& file_path, std::string name){
     // Create input-file stream object
     std::ifstream file(file_path);
 
-    Eigen::MatrixXd homogeneous_matrix;
-
-    // Assign matrix size
-    if (name == "calib"){ // projection matrix is a 3 x 4 matrix
-        row = 3;
-        homogeneous_matrix = Eigen::MatrixXd(row, col);
-    }
-    else{
-        row = 4;
-        homogeneous_matrix = Eigen::MatrixXd(row, col);
-    }
+    Eigen::MatrixXd matrix_(row, col);
 
     // Create a vector to hold the 4 homogeneous matrices
     std::vector<Eigen::MatrixXd> matrix_vector; 
@@ -53,8 +43,8 @@ std::vector<Eigen::MatrixXd> LoadData::load_homogeneous_matrix(std::string& file
         int rw = 0, cl = 0;
 
         if(name == "calib"){
-            // calib txt looks like P0: 7.188560000000e+02 0.000000000000e+00  ....
-            // Skip the "P0:" label
+            // calib txt looks like "P0: 7.188560000000e+02 0.000000000000e+00  ...."
+            // Do this to skip the "P0:" label
             std::string label;
             ss >> label; 
         }
@@ -62,15 +52,13 @@ std::vector<Eigen::MatrixXd> LoadData::load_homogeneous_matrix(std::string& file
         // For every line, read the homogeneous matrix values on the line
         while(ss >> element){
             // Assign element to matrix location
-            homogeneous_matrix(rw, cl) = element; 
+            matrix_(rw, cl) = element; 
             cl ++;
             if (cl == col){cl = 0; rw++;}  // Move to next row
         }
-        // The last element of the matrix must be set to 1. Matrix is a homogeneous matrix
-        homogeneous_matrix(row-1, col-1) = 1;
 
-        matrix_vector.emplace_back(homogeneous_matrix);
-        // std::cout << homogeneous_matrix << "\n";
+        matrix_vector.emplace_back(matrix_);
+        // std::cout << matrix_ << "\n";
         // std::cout << "------------------\n";
 
     }
