@@ -38,8 +38,8 @@ This method calls the visual odometry publisher.
     }
     else{
         p_msg.position.x = Translation.at<double>(0);
-        p_msg.position.y = Translation.at<double>(1);
-        p_msg.position.z = Translation.at<double>(2);
+        p_msg.position.y = Translation.at<double>(2);
+        p_msg.position.z = Translation.at<double>(1);
     }
     
 
@@ -56,10 +56,7 @@ This method calls the visual odometry publisher.
     odometry_publisher->publish(pose_array_msg);
     // RCLCPP_INFO(this->get_logger(), std::to_string(pose_vector.size()).c_str());
     // std::cout <<p_msg.position.x << "   " << p_msg.position.y << " \n";
-    // std::cout << matrix_RT  << " \n";
-
-    // count += 0.01;  // Increment count
-   
+    // std::cout << matrix_RT  << " \n";   
 }
 
 

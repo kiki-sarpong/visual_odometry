@@ -68,10 +68,12 @@ void VisualOdometry::run_visual_odometry(){
     // Initialize rotation and translation
     cv::Mat prev_Rotation = cv::Mat::eye(3, 3, CV_64F); // Identity matrix
     cv::Mat prev_Trans = cv::Mat::zeros(3, 1, CV_64F); // Start point is zero
+    prev_R_and_T = VisualOdometry::create_R_and_T_matrix(prev_Rotation, prev_Trans);
+
     int i = 1;
     // Main visual odometry iteration
     while (rclcpp::ok() && i < image_iter_size){
-        std::vector<uchar> mask;  // Initialize mask
+        std::vector<uchar> inlier_mask;  // Initialize inlier_mask
         std::vector<cv::DMatch> matches;  // Get matches
         std::vector<cv::DMatch> good_matches;  // Get good matches
         // Create prev_q and curr_q keypoints using the good matches
@@ -94,6 +96,8 @@ void VisualOdometry::run_visual_odometry(){
         if(curr_descriptors.type() != CV_32F) {
             curr_descriptors.convertTo(curr_descriptors, CV_32F);
         }
+        
+        // Match features with flann matcher
         flannMatcher.match(prev_descriptors, curr_descriptors, matches);
 
         RCLCPP_DEBUG(this->get_logger(), "Finished flanndetection detection.");
@@ -109,10 +113,37 @@ void VisualOdometry::run_visual_odometry(){
             }
         }
 
+        // if(prev_descriptors.type() != CV_8U) {
+        //     prev_descriptors.convertTo(prev_descriptors, CV_8U);
+        // }
+
+        // if(curr_descriptors.type() != CV_8U) {
+        //     curr_descriptors.convertTo(curr_descriptors, CV_8U);
+        // }
+
+        // // Initialize BFMatcher for binary descriptors (Hamming distance)
+        // cv::BFMatcher bf(cv::NORM_HAMMING, true);
+
+        // // KNN feature matching
+        // std::vector<std::vector<cv::DMatch>> knn_matches;
+        // bf.knnMatch(prev_descriptors, curr_descriptors, knn_matches, 2);  // 2 nearest neighbors
+
+        // // std::vector<cv::DMatch> good_matches;
+        // for (size_t i = 0; i < knn_matches.size(); ++i) {
+        //     if (knn_matches[i][0].distance < feature_detection_prob * knn_matches[i][1].distance) {
+        //         good_matches.push_back(knn_matches[i][0]);  // Keep the best match if it passes the ratio test
+        //     }
+        // }
+
+
         // Create prev_q and curr_q using the good matches | The good keypoints within the threshold
         for (const cv::DMatch& m : good_matches) {
             prev_q.emplace_back(prev_keypoints[m.queryIdx].pt);  // Get points from the first image
             curr_q.emplace_back(curr_keypoints[m.trainIdx].pt);  // Get points from the second image
+        }
+        // Skip iteration if there are too few matches for essential matrix
+        if (good_matches.size() < 5) {
+            continue;  
         }
 
         // Convert Eigen matrix to cv::Mat | Calibration matrix here is a projection matrix K[R|t]
@@ -121,18 +152,25 @@ void VisualOdometry::run_visual_odometry(){
         // Get K(intrinsic) matrix from projection matrix
         cv::Mat left_camera_K = VisualOdometry::decompose_matrix(calib_proj_matrix);
 
-        // Get essential matrix and mask
-        essentialMatrix = cv::findEssentialMat(prev_q, curr_q, left_camera_K, cv::RANSAC, ransac_prob, 1.0, mask);
-        std::cout << left_camera_K  << "\n";
+        // Get essential matrix and inlier_mask
+        essentialMatrix = cv::findEssentialMat(prev_q, curr_q, left_camera_K, cv::RANSAC, ransac_prob, 1.0, inlier_mask);
         // Get rotation and translation
-        cv::recoverPose(essentialMatrix, prev_q, curr_q, left_camera_K, Rotation, Trans, mask);
+        cv::recoverPose(essentialMatrix, prev_q, curr_q, left_camera_K, Rotation, Trans, inlier_mask);
+
+        cv::Mat inverse;
+        cv::invert(Rotation, inverse, cv::DECOMP_LU);
+        prev_Rotation = Rotation*inverse;
+        prev_Trans = prev_Trans - prev_Rotation*Trans;
 
         // Create 3 x 4 matrix from rotation and translation
-        prev_R_and_T = VisualOdometry::create_R_and_T_matrix(prev_Rotation, prev_Trans);
-        curr_R_and_T = VisualOdometry::create_R_and_T_matrix(Rotation, Trans);
+        curr_R_and_T = VisualOdometry::create_R_and_T_matrix(prev_Rotation, prev_Trans);
+
+        // Update the rotation and translation based on the new output
+        // VisualOdometry::update_pose(prev_R_and_T, curr_R_and_T); 
+
         // Get projection matrix by Intrisics x [R|t]
-        cv::Mat prev_projection_matrix = left_camera_K * prev_R_and_T;
-        cv::Mat curr_projection_matrix = left_camera_K * curr_R_and_T;
+        // cv::Mat prev_projection_matrix = left_camera_K * prev_R_and_T;
+        // cv::Mat curr_projection_matrix = left_camera_K * curr_R_and_T;
 
         // Triangulate points 2D points to 3D
         // cv::triangulatePoints(prev_projection_matrix, curr_projection_matrix, prev_q, curr_q, triangulated_points);
@@ -145,11 +183,13 @@ void VisualOdometry::run_visual_odometry(){
         
         // std::cout << triangulated_points << "\n";
         // std::cout << " ----------------\n";
-
+        std::cout << curr_R_and_T << "outside\n";
+        std::cout << " ----------------\n";
         // Update previous image
         prev_image = curr_image;
-        prev_Rotation = Rotation;
-        prev_Trans = Trans;
+        prev_R_and_T = curr_R_and_T;
+        // prev_Rotation = Rotation;
+        // prev_Trans = Trans;
         i++;
     }
     RCLCPP_INFO(this->get_logger(), "Visual odometry complete!");
@@ -199,4 +239,35 @@ cv::Mat VisualOdometry::create_R_and_T_matrix(cv::Mat& rotation, cv::Mat& transl
     translation.copyTo(matrix_(cv::Rect(3, 0, 1, 3)));
 
     return matrix_;
+}
+
+
+/*
+This method updates the pose(rotation, translation) for the visual odometry
+inputs: Prev_r_and_t(3x4 matrix), curr_r_and_t(3x4 matrix)
+returns: void
+*/
+void VisualOdometry::update_pose(cv::Mat& prev_mat, cv::Mat& curr_mat){
+     // Create 4 by 4 matrix
+    cv::Mat prev_h_matrix = cv::Mat::zeros(4, 4, CV_64F);
+    cv::Mat curr_h_matrix = cv::Mat::zeros(4, 4, CV_64F);
+    
+    // std::cout << curr_mat << "first currmat\n";
+    // std::cout << " ----------------\n";
+
+    // Convert to homogeneous matrix. cv::Rect(x,y,width,height)
+    prev_mat.copyTo(prev_h_matrix(cv::Rect(0, 0, 4, 3)));
+    curr_mat.copyTo(curr_h_matrix(cv::Rect(0, 0, 4, 3)));
+    prev_h_matrix.at<double>(3, 3) = 1.0;
+    curr_h_matrix.at<double>(3, 3) = 1.0;
+    // std::cout << curr_h_matrix << "second currmat\n";
+    // std::cout << " ----------------\n";
+
+    // cv::Mat inverse_mat_h;
+    // cv::invert(curr_h_matrix, inverse_mat_h, cv::DECOMP_LU);
+    cv::Mat new_prev_h = prev_h_matrix * curr_h_matrix;
+    std::cout << new_prev_h << "third currmat\n";
+    std::cout << " ----------------\n";
+
+    prev_mat = new_prev_h(cv::Rect(0, 0, 4, 3));
 }

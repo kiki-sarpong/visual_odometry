@@ -15,13 +15,14 @@ class VisualOdometry : public rclcpp::Node {
         cv::Mat decompose_matrix(cv::Mat& projection_matrix);
         cv::Mat eigen_to_cv(Eigen::MatrixXd& eigen_matrix);
         cv::Mat create_R_and_T_matrix(cv::Mat& rotation, cv::Mat& translation);
+        void update_pose(cv::Mat& prev_mat, cv::Mat& curr_mat);
 
         // Call Destructor
         ~VisualOdometry();
 
     private:
-        float feature_detection_prob = 0.7; // probability for "good" features to keep
-        float ransac_prob = 0.7; // probability for RANSAC(outlier detection)
+        float feature_detection_prob = 0.75; // probability for "good" features to keep
+        float ransac_prob = 0.9; // probability for RANSAC(outlier detection)
         // Create descriptors
         cv::Mat prev_descriptors, curr_descriptors;
         cv::FlannBasedMatcher flannMatcher; // Use the flann based matcher
