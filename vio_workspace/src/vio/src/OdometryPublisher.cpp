@@ -1,31 +1,29 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "geometry_msgs/msg/pose_array.hpp"
 #include "geometry_msgs/msg/pose.hpp"
-// #include "tf2_msgs/msg/tf_message.hpp"
 #include "std_msgs/msg/header.hpp"
 #include "OdometryPublisher.h"
-
+#include "VisualOdometry.h"
 
 
 // Constructor
-OdometryPublisher::OdometryPublisher() : Node("odometry_publisher"){
+OdometryPublisher::OdometryPublisher(VisualOdometry* main_node_, std::string tp_name) : main_node(main_node_), topic_name(tp_name){
     // Set QOS profile for services and topics
     rclcpp::QoS qos_profile(qos_depth);
     qos_profile.reliable();  // Reliable communication
     qos_profile.durability_volatile();  // Retain last message
-    std::string topic_name = "odometry_publisher";
 
-    odometry_publisher = this->create_publisher<geometry_msgs::msg::PoseArray>(topic_name, qos_profile);
-    RCLCPP_INFO(this->get_logger(), (topic_name + " has started.").c_str());
+    odometry_publisher = main_node->create_publisher<geometry_msgs::msg::PoseArray>(topic_name, qos_profile);
+    RCLCPP_INFO(main_node->get_logger(), (topic_name + " has started.").c_str());
 }
 
 
 /*
 This method calls the visual odometry publisher.
 */
- void OdometryPublisher::call_publisher(cv::Mat& matrix_RT){
+ void OdometryPublisher::call_publisher(cv::Mat& matrix_RT, std::string pub_type){
     auto pose_array_msg = geometry_msgs::msg::PoseArray(); 
-    pose_array_msg.header.stamp = this->get_clock()->now();
+    pose_array_msg.header.stamp = main_node->get_clock()->now();
     pose_array_msg.header.frame_id = map;
 
     // Get Rotation and Translation from matrix_RT
@@ -33,10 +31,17 @@ This method calls the visual odometry publisher.
     cv::Mat Translation = matrix_RT(cv::Range(0, 3), cv::Range(3, 4));
 
     auto p_msg = geometry_msgs::msg::Pose();
-
-    p_msg.position.x = Translation.at<double>(0);
-    p_msg.position.y = Translation.at<double>(2);
-    p_msg.position.z = Translation.at<double>(1);
+    if(pub_type=="ground_truth"){
+        p_msg.position.x = Translation.at<double>(0);
+        p_msg.position.y = Translation.at<double>(2);
+        p_msg.position.z = Translation.at<double>(1);
+    }
+    else{
+        p_msg.position.x = Translation.at<double>(0);
+        p_msg.position.y = Translation.at<double>(1);
+        p_msg.position.z = Translation.at<double>(2);
+    }
+    
 
     tf2::Quaternion quaternion = OdometryPublisher::rot_to_quaternion(Rotation);
     p_msg.orientation.x = quaternion.x();
@@ -51,7 +56,7 @@ This method calls the visual odometry publisher.
     odometry_publisher->publish(pose_array_msg);
     // RCLCPP_INFO(this->get_logger(), std::to_string(pose_vector.size()).c_str());
     // std::cout <<p_msg.position.x << "   " << p_msg.position.y << " \n";
-    std::cout << matrix_RT  << " \n";
+    // std::cout << matrix_RT  << " \n";
 
     // count += 0.01;  // Increment count
    

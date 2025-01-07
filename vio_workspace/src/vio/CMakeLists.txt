@@ -12,7 +12,6 @@ find_package(geometry_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(tf2 REQUIRED)
-find_package(tf2_msgs REQUIRED)
 # find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
 
@@ -33,8 +32,6 @@ src/VisualOdometry.cpp
 src/OdometryPublisher.cpp
 )
 
-add_executable(test_cpp src/test_cpp.cpp)
-
 # First entry is the executable, the rest are dependencies
 ament_target_dependencies(
 visual_odometry
@@ -42,16 +39,13 @@ rclcpp
 std_msgs
 geometry_msgs
 tf2
-tf2_msgs
 OpenCV
 Eigen3
 )
 
-ament_target_dependencies(test_cpp rclcpp std_msgs)
 # Include executable targets
 install(TARGETS
 visual_odometry
-test_cpp
 DESTINATION lib/${PROJECT_NAME}
 )
 
