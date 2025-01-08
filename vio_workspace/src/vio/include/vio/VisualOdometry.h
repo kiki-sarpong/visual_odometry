@@ -21,8 +21,8 @@ class VisualOdometry : public rclcpp::Node {
         ~VisualOdometry();
 
     private:
-        float feature_detection_prob = 0.75; // probability for "good" features to keep
-        float ransac_prob = 0.9; // probability for RANSAC(outlier detection)
+        float feature_detection_prob = 0.85; // probability for "good" features to keep
+        float ransac_prob = 0.85; // probability for RANSAC(outlier detection)
         // Create descriptors
         cv::Mat prev_descriptors, curr_descriptors;
         cv::FlannBasedMatcher flannMatcher; // Use the flann based matcher

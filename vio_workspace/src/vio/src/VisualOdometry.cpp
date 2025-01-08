@@ -45,7 +45,7 @@ void VisualOdometry::run_visual_odometry(){
     // std::shared_ptr<OdometryPublisher> ground_truth_pub = std::make_shared<OdometryPublisher>(this, "ground_truth_publisher");
     // std::shared_ptr<OdometryPublisher> visual_odometry_pub = std::make_shared<OdometryPublisher>(this, "visual_odometry_publisher");
 
-    int number_of_images = 500;
+    int number_of_images = 1000;
     int& image_iter_size = number_of_images;
     std::vector<std::string> left_images = data.load_images(left_images_dir, number_of_images);
 
@@ -62,8 +62,8 @@ void VisualOdometry::run_visual_odometry(){
     // Get initial image
     cv::Mat prev_image = cv::imread(left_images[0], cv::IMREAD_GRAYSCALE);
 
-    // create ORB detector
-    cv::Ptr<cv::ORB> orb = cv::ORB::create();
+    // Create  detector
+    cv::Ptr<cv::SIFT> detector = cv::SIFT::create();
 
     // Initialize rotation and translation
     cv::Mat prev_Rotation = cv::Mat::eye(3, 3, CV_64F); // Identity matrix
@@ -83,10 +83,10 @@ void VisualOdometry::run_visual_odometry(){
         // Load current image
         cv::Mat curr_image = cv::imread(left_images[i], cv::IMREAD_GRAYSCALE);
 
-        orb->detectAndCompute(prev_image, cv::noArray(), prev_keypoints, prev_descriptors);
-        orb->detectAndCompute(curr_image, cv::noArray(), curr_keypoints, curr_descriptors);
+        detector->detectAndCompute(prev_image, cv::noArray(), prev_keypoints, prev_descriptors);
+        detector->detectAndCompute(curr_image, cv::noArray(), curr_keypoints, curr_descriptors);
 
-        RCLCPP_DEBUG(this->get_logger(), "Finished orb detection.");
+        RCLCPP_DEBUG(this->get_logger(), "Finished detection.");
 
         // In order to use FlannBasedMatcher you need to convert your descriptors to CV_32F:
         if(prev_descriptors.type() != CV_32F) {
@@ -97,43 +97,36 @@ void VisualOdometry::run_visual_odometry(){
             curr_descriptors.convertTo(curr_descriptors, CV_32F);
         }
         
-        // Match features with flann matcher
-        flannMatcher.match(prev_descriptors, curr_descriptors, matches);
+        
 
-        RCLCPP_DEBUG(this->get_logger(), "Finished flanndetection detection.");
 
-        // Filter matches based on threshold
-        for (size_t i = 0; i < matches.size(); ++i) {
-            const cv::DMatch& m = matches[i];
-            if (i + 1 < matches.size()) { 
-                const cv::DMatch& n = matches[i + 1];  // Assuming 'n' is the next match (second best)
-                if (m.distance < this->feature_detection_prob * n.distance) {
-                    good_matches.emplace_back(m);
-                }
+
+        // // Filter matches based on threshold
+        // for (size_t i = 0; i < matches.size(); ++i) {
+        //     const cv::DMatch& m = matches[i];
+        //     if (i + 1 < matches.size()) { 
+        //         const cv::DMatch& n = matches[i + 1];  // Assuming 'n' is the next match (second best)
+        //         if (m.distance < this->feature_detection_prob * n.distance) {
+        //             good_matches.emplace_back(m);
+        //         }
+        //     }
+        // }
+
+
+        // Matcher
+        cv::Ptr<cv::DescriptorMatcher> matcher = cv::DescriptorMatcher::create(cv::DescriptorMatcher::FLANNBASED);
+        std::vector< std::vector<cv::DMatch>> knn_matches;
+        matcher->knnMatch(prev_descriptors, curr_descriptors, knn_matches, 2);
+    
+        // Filter matches using the Lowe's ratio test
+        for (size_t i = 0; i < knn_matches.size(); i++)
+        {
+            if (knn_matches[i][0].distance < feature_detection_prob * knn_matches[i][1].distance)
+            {
+                good_matches.push_back(knn_matches[i][0]);
             }
         }
 
-        // if(prev_descriptors.type() != CV_8U) {
-        //     prev_descriptors.convertTo(prev_descriptors, CV_8U);
-        // }
-
-        // if(curr_descriptors.type() != CV_8U) {
-        //     curr_descriptors.convertTo(curr_descriptors, CV_8U);
-        // }
-
-        // // Initialize BFMatcher for binary descriptors (Hamming distance)
-        // cv::BFMatcher bf(cv::NORM_HAMMING, true);
-
-        // // KNN feature matching
-        // std::vector<std::vector<cv::DMatch>> knn_matches;
-        // bf.knnMatch(prev_descriptors, curr_descriptors, knn_matches, 2);  // 2 nearest neighbors
-
-        // // std::vector<cv::DMatch> good_matches;
-        // for (size_t i = 0; i < knn_matches.size(); ++i) {
-        //     if (knn_matches[i][0].distance < feature_detection_prob * knn_matches[i][1].distance) {
-        //         good_matches.push_back(knn_matches[i][0]);  // Keep the best match if it passes the ratio test
-        //     }
-        // }
 
 
         // Create prev_q and curr_q using the good matches | The good keypoints within the threshold
@@ -147,7 +140,7 @@ void VisualOdometry::run_visual_odometry(){
         }
 
         // Convert Eigen matrix to cv::Mat | Calibration matrix here is a projection matrix K[R|t]
-        cv::Mat calib_proj_matrix = VisualOdometry::eigen_to_cv(calib_data[0]);
+        cv::Mat calib_proj_matrix = VisualOdometry::eigen_to_cv(calib_data[0]); //!!!  FIX
     
         // Get K(intrinsic) matrix from projection matrix
         cv::Mat left_camera_K = VisualOdometry::decompose_matrix(calib_proj_matrix);
@@ -159,9 +152,12 @@ void VisualOdometry::run_visual_odometry(){
 
         cv::Mat inverse;
         cv::invert(Rotation, inverse, cv::DECOMP_LU);
-        prev_Rotation = Rotation*inverse;
         prev_Trans = prev_Trans - prev_Rotation*Trans;
-
+        prev_Rotation = prev_Rotation*inverse;
+        
+        // prev_Trans = prev_Trans + prev_Rotation*Trans;
+        // prev_Rotation = Rotation*prev_Rotation;
+        
         // Create 3 x 4 matrix from rotation and translation
         curr_R_and_T = VisualOdometry::create_R_and_T_matrix(prev_Rotation, prev_Trans);
 
@@ -183,8 +179,8 @@ void VisualOdometry::run_visual_odometry(){
         
         // std::cout << triangulated_points << "\n";
         // std::cout << " ----------------\n";
-        std::cout << curr_R_and_T << "outside\n";
-        std::cout << " ----------------\n";
+        // std::cout << curr_R_and_T << "outside\n";
+        // std::cout << " ----------------\n";
         // Update previous image
         prev_image = curr_image;
         prev_R_and_T = curr_R_and_T;
