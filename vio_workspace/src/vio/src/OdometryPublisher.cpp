@@ -34,12 +34,12 @@ This method calls the visual odometry publisher.
     if(pub_type=="ground_truth"){
         p_msg.position.x = Translation.at<double>(0);
         p_msg.position.y = Translation.at<double>(2);
-        p_msg.position.z = Translation.at<double>(1);
+        p_msg.position.z = 0.0; //Translation.at<double>(1);
     }
     else{
         p_msg.position.x = Translation.at<double>(0);
         p_msg.position.y = Translation.at<double>(2);
-        p_msg.position.z = Translation.at<double>(1);
+        p_msg.position.z = 0.0; // Translation.at<double>(1);
     }
     
 

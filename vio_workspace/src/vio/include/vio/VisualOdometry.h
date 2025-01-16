@@ -15,17 +15,17 @@ class VisualOdometry : public rclcpp::Node {
         cv::Mat decompose_matrix(cv::Mat& projection_matrix);
         cv::Mat eigen_to_cv(Eigen::MatrixXd& eigen_matrix);
         cv::Mat create_R_and_T_matrix(cv::Mat& rotation, cv::Mat& translation);
-        void update_pose(cv::Mat& prev_mat, cv::Mat& curr_mat);
+        double get_scale(std::vector<Eigen::MatrixXd>& eigen_matrix_vector, const int idx);
+        void detect_features(cv::Mat& image, std::vector<cv::Point2f>& points);
 
         // Call Destructor
         ~VisualOdometry();
 
     private:
-        float feature_detection_prob = 0.85; // probability for "good" features to keep
-        float ransac_prob = 0.85; // probability for RANSAC(outlier detection)
-        // Create descriptors
-        cv::Mat prev_descriptors, curr_descriptors;
-        cv::FlannBasedMatcher flannMatcher; // Use the flann based matcher
+        int minimum_feature_count = 1000; // Threshold for minimum number of features
+        float ransac_prob = 0.85; // Probability for RANSAC(outlier detection)
+        int fast_threshold = 20;    // Threshold for FAST algorithm
+        bool nonmaxSuppression = true;
         cv::Mat essentialMatrix, Rotation, Trans, triangulated_points;  // Initialize essential matrix, rotation and translation
         cv::Mat prev_R_and_T, curr_R_and_T;
         
