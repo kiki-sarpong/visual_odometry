@@ -12,12 +12,12 @@ class LoadData{
         // Call Destructor
         ~LoadData();
 
-        std::vector<Eigen::MatrixXd> load_homogeneous_matrix(std::string& file_path, std::string name = "none");
+        std::vector<Eigen::MatrixXd> load_matrix(std::string& file_path, std::string name = "none");
         std::vector<double> load_timestamps(std::string& file_path);
         std::vector<std::string> load_images(std::string& file_path, int number_to_load = -1);
 
     private:
-        int row = 4;
+        int row = 3;
         int col = 4;
 };
 
