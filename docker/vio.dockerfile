@@ -13,12 +13,17 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     python3 \
     tree \
     libopencv-dev \
+    libceres-dev \
     libeigen3-dev \
     ros-${ROS_DISTRO}-rviz2 \
     ros-${ROS_DISTRO}-cv-bridge \
     # This remembers to clean the apt cache after a run for size reduction
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# COPY ./sophus_setup.sh .
+# RUN bash sophus_setup.sh
+
 
 # Add the new_user to listed groups. And remove need for password
 RUN adduser --disabled-password --gecos '' ${NEW_USER} \
@@ -30,7 +35,7 @@ FROM base AS dev-ws
 
 USER ${NEW_USER}
 WORKDIR $WS_DIR
-
+# COPY --from=base /vcpkg_installed /vcpkg_installed
 
 # Setup ROS2 environment
 RUN echo "source /opt/ros/${ROS_DISTRO}/setup.bash" >> /home/$NEW_USER/.bashrc
