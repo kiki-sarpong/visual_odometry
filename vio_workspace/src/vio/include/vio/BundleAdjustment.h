@@ -55,7 +55,7 @@ class BundleAdjustment{
 };
 
 
-void run_bundle_adjustment(std::vector<std::vector<cv::Point2f>>& observations_2d, std::vector<Eigen::Vector3d>& observations_3d,
+void run_bundle_adjustment(std::vector<std::vector<cv::Point2f>>& observations_2d, std::vector<Eigen::MatrixXd>& observations_3d,
  std::vector<Eigen::VectorXd>& camera_poses);
 
 

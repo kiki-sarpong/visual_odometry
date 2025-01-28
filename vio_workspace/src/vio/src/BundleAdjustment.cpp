@@ -6,7 +6,7 @@ This method runs the bundle adjustment pipeline to minimize reprojection error
 input: vector of 2d feature points, vector of 3d triangulated points, vector of camera poses
 returns: void
 */
-void run_bundle_adjustment(std::vector<std::vector<cv::Point2f>>& observations_2d, std::vector<Eigen::Vector3d>& observations_3d, 
+void run_bundle_adjustment(std::vector<std::vector<cv::Point2f>>& observations_2d, std::vector<Eigen::MatrixXd>& observations_3d, 
     std::vector<Eigen::VectorXd>& camera_poses){
 
     ceres::Problem problem;
@@ -24,10 +24,15 @@ void run_bundle_adjustment(std::vector<std::vector<cv::Point2f>>& observations_2
     int indx = 0;
     for(std::vector<cv::Point2f>& points : observations_2d){
         // Continuously add the 3d points for every image through the iteration
-        problem.AddParameterBlock(observations_3d[indx].data(), 3); 
+        // problem.AddParameterBlock(observations_3d[indx].data(), 3); 
         problem.AddParameterBlock(camera_poses[indx].data(), cam_size);
+        std::cout << "I'm alive"  << "\n";
 
         for(size_t i=0; i < points.size(); i++){ /* Iterate through all the 2d points per image*/
+            Eigen::Vector3d v3d;
+            v3d << observations_3d[indx](i,0), observations_3d[indx](i,1), observations_3d[indx](i,2);
+
+            problem.AddParameterBlock(v3d.data(), 3); 
             BundleAdjustment* b_adj_ptr = new BundleAdjustment(points[i].x/*x*/, points[i].y/*y*/);
             cost_function = new ceres::AutoDiffCostFunction<BundleAdjustment, points_2d_size, cam_size, points_3d_size>(b_adj_ptr);
             problem.AddResidualBlock(cost_function, nullptr/*squared_loss*/, camera_poses[indx].data(), observations_3d[indx].data());

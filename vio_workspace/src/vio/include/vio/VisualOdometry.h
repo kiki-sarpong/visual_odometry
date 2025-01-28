@@ -17,7 +17,7 @@ class VisualOdometry : public rclcpp::Node {
         cv::Mat create_R_and_T_matrix(cv::Mat& rotation, cv::Mat& translation);
         double get_scale(std::vector<Eigen::MatrixXd>& eigen_matrix_vector, const int idx);
         void detect_features(cv::Mat& image, std::vector<cv::Point2f>& points);
-        Eigen::Vector3d points_4d_to_3d(cv::Mat& points);
+        Eigen::MatrixXd points_4d_to_3d(cv::Mat& points);
         Eigen::Vector3d rotation_to_axis_angle(const cv::Mat& R);
 
         // Call Destructor
@@ -33,7 +33,7 @@ class VisualOdometry : public rclcpp::Node {
 
         std::vector<std::vector<cv::Point2f>> observations_2d;
         std::vector<Eigen::VectorXd> camera_poses;
-        std::vector<Eigen::Vector3d> observations_3d;
+        std::vector<Eigen::MatrixXd> observations_3d;
 
         // I can reset the vector for the 2d points every x-frames. The only thing i need to keep is the 3d points 
         
