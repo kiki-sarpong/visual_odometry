@@ -17,7 +17,8 @@ class VisualOdometry : public rclcpp::Node {
         cv::Mat create_R_and_T_matrix(cv::Mat& rotation, cv::Mat& translation);
         double get_scale(std::vector<Eigen::MatrixXd>& eigen_matrix_vector, const int idx);
         void detect_features(cv::Mat& image, std::vector<cv::Point2f>& points);
-        cv::Mat points_4d_to_3d(cv::Mat& points);
+        Eigen::Vector3d points_4d_to_3d(cv::Mat& points);
+        Eigen::Vector3d rotation_to_axis_angle(const cv::Mat& R);
 
         // Call Destructor
         ~VisualOdometry();

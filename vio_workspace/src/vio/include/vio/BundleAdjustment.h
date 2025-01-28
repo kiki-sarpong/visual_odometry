@@ -30,10 +30,11 @@ class BundleAdjustment{
             T yp = - p[1] / p[2];
 
             // Apply second and fourth order radial distortion.
-            const T& l1 = camera[7];
-            const T& l2 = camera[8];
+            // const T& l1 = camera[7];
+            // const T& l2 = camera[8];
             T r2 = xp*xp + yp*yp;
-            T distortion = 1.0 + r2  * (l1 + l2  * r2);
+            // T distortion = 1.0 + r2  * (l1 + l2  * r2);
+            T distortion = 1.0 + r2  * r2;
 
             // Compute final projected point position.
             const T& focal = camera[6];

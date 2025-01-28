@@ -1,6 +1,11 @@
 #include "BundleAdjustment.h"
 
 
+/*
+This method runs the bundle adjustment pipeline to minimize reprojection error
+input: vector of 2d feature points, vector of 3d triangulated points, vector of camera poses
+returns: void
+*/
 void run_bundle_adjustment(std::vector<std::vector<cv::Point2f>>& observations_2d, std::vector<Eigen::Vector3d>& observations_3d, 
     std::vector<Eigen::VectorXd>& camera_poses){
 
@@ -10,16 +15,17 @@ void run_bundle_adjustment(std::vector<std::vector<cv::Point2f>>& observations_2
     const int points_2d_size = 2;
     const int points_3d_size = 3;
 
-    // Add the camera poses to the parameter block
-    for (auto& cam : camera_poses){
-        /* Using ".data()" because the function expects a double* pointer*/
-        problem.AddParameterBlock(cam.data(), cam_size);
-    }
+    // // Add the camera poses to the parameter block
+    // for (auto& cam : camera_poses){
+    //     /* Using ".data()" because the function expects a double* pointer*/
+    //     problem.AddParameterBlock(cam.data(), cam_size);
+    // }
 
     int indx = 0;
     for(std::vector<cv::Point2f>& points : observations_2d){
         // Continuously add the 3d points for every image through the iteration
         problem.AddParameterBlock(observations_3d[indx].data(), 3); 
+        problem.AddParameterBlock(camera_poses[indx].data(), cam_size);
 
         for(size_t i=0; i < points.size(); i++){ /* Iterate through all the 2d points per image*/
             BundleAdjustment* b_adj_ptr = new BundleAdjustment(points[i].x/*x*/, points[i].y/*y*/);

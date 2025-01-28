@@ -5,6 +5,7 @@
 #include "LoadData.h"
 #include "OdometryPublisher.h"
 #include "VisualOdometry.h"
+#include "BundleAdjustment.h"
 
 // Constructor
 VisualOdometry::VisualOdometry() : Node("visual_odometry"){
@@ -135,9 +136,34 @@ void VisualOdometry::run_visual_odometry(){
         // Divide XYZ by W to get 3d coordinates 
         cv::Mat points_4d;
         cv::triangulatePoints(prev_projection_matrix, curr_projection_matrix, prev_points, curr_points, points_4d);
-        cv::Mat points_3d = VisualOdometry::points_4d_to_3d(points_4d);
-        std::cout << "2d points: " << curr_points.size() << "\n";
-        std::cout << "3d points: " << points_3d.size() << "\n\n";
+        Eigen::Vector3d points_3d = VisualOdometry::points_4d_to_3d(points_4d);
+
+        // Append data for Bundle adjustment
+        observations_2d.emplace_back(curr_points);  // Save 2d features
+        observations_3d.emplace_back(points_3d);  // Save 3d triangulated points
+        // Axis angle is parameterized to 3 values here-> (x*theta,y*theta,z*theta)
+        Eigen::Vector3d axis_angle = VisualOdometry::rotation_to_axis_angle(prev_Rotation);
+        double fx = left_camera_K.at<double>(0,0), fy = left_camera_K.at<double>(1,1);
+        double focal_length = std::sqrt(fx*fx + fy*fy);
+        // Create camera pose vector. axis angle, translation, focal length
+        Eigen::VectorXd c_poses;
+        c_poses << axis_angle[0], axis_angle[1], axis_angle[2], prev_Trans.at<double>(0),
+         prev_Trans.at<double>(1), prev_Trans.at<double>(2), focal_length;
+        
+        camera_poses.emplace_back(c_poses);  // Save camera pose
+
+
+        if (i % 50 == 0){
+            run_bundle_adjustment(observations_2d, observations_3d, camera_poses);
+            
+            // Reset variables
+            std::vector<std::vector<cv::Point2f>> observations_2d;
+            std::vector<Eigen::VectorXd> camera_poses;
+            std::vector<Eigen::Vector3d> observations_3d;
+        }
+
+        // std::cout << "2d points: " << curr_points.size() << "\n";
+        // std::cout << "3d points: " << points_3d.size() << "\n\n";
 
         // Call publisher node to publish points
         cv::Mat gt_matrix = VisualOdometry::eigen_to_cv(ground_truth[i]);
@@ -247,7 +273,7 @@ This method converts the 4d triangulated points into 3d
 input: points in 4d -> row(x,y,z,w) * column(all points)
 output: points in 3d
 */
-cv::Mat VisualOdometry::points_4d_to_3d(cv::Mat& points_4d){
+Eigen::Vector3d VisualOdometry::points_4d_to_3d(cv::Mat& points_4d){
     // The points_4d array is flipped. It is row(x,y,z,w) * column(all points)
     cv::Mat last_col; 
     cv::transpose(points_4d.row(3), last_col);  // Get last row which W
@@ -256,5 +282,30 @@ cv::Mat VisualOdometry::points_4d_to_3d(cv::Mat& points_4d){
         cv::transpose(points_4d.row(i), points_3d.col(i));
         points_3d.col(i) = points_3d.col(i).mul((1/last_col)); // Divide by last column
     }
-    return points_3d;
+    Eigen::Vector3d p3d(points_4d.cols, 3);
+    cv::cv2eigen(points_3d, p3d);
+
+    return p3d;
+}
+
+
+/*
+
+*/
+Eigen::Vector3d VisualOdometry::rotation_to_axis_angle(const cv::Mat& R){
+    cv::Mat W = (R - R.t()) * 0.5; 
+
+    // Extract rotation axis
+    double wx = W.at<double>(2, 1);
+    double wy = W.at<double>(0, 2);
+    double wz = W.at<double>(1, 0);
+    Eigen::Vector3d axis(wx, wy, wz);
+
+    cv::Mat identitym = cv::Mat::ones(3,3,CV_32F);
+    std::cout << cv::sum(identitym.diag())[0] << "\n";
+
+    // Calculate rotation angle
+    double angle = std::acos((cv::sum(R.diag())[0] - 1.0) / 2.0);
+
+    return angle * axis; // Return axis-angle representation
 }
