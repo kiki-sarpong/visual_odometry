@@ -9,6 +9,7 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(tf2 REQUIRED)
@@ -36,6 +37,7 @@ src/LoadData.cpp
 src/VisualOdometry.cpp
 src/OdometryPublisher.cpp
 src/BundleAdjustment.cpp
+src/PointCloudPublisher.cpp
 )
 
 # First entry is the executable, the rest are dependencies
@@ -44,6 +46,7 @@ visual_odometry
 rclcpp
 std_msgs
 geometry_msgs
+sensor_msgs
 tf2
 OpenCV
 Eigen3

@@ -26,7 +26,6 @@ void run_bundle_adjustment(std::vector<std::vector<cv::Point2f>>& observations_2
         // Continuously add the 3d points for every image through the iteration
         // problem.AddParameterBlock(observations_3d[indx].data(), 3); 
         problem.AddParameterBlock(camera_poses[indx].data(), cam_size);
-        std::cout << "I'm alive"  << "\n";
 
         for(size_t i=0; i < points.size(); i++){ /* Iterate through all the 2d points per image*/
             Eigen::Vector3d v3d;
@@ -41,7 +40,6 @@ void run_bundle_adjustment(std::vector<std::vector<cv::Point2f>>& observations_2
         // Increment index
         indx++;
     }
-
     ceres::Solver::Options options;
     options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
     options.minimizer_progress_to_stdout = false;
