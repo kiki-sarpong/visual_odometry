@@ -9,15 +9,21 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(tf2 REQUIRED)
 # find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
+find_package(Ceres REQUIRED)
+
 
 include_directories(
   include
   include/vio
+  #/usr/include/eigen3/
+  ${CERES_INCLUDE_DIRS}
+  #/vcpkg_installed/x64-linux/include/
   ${OpenCV_INCLUDE_DIRS}
 )
 # target_include_directories() 
@@ -30,6 +36,8 @@ src/main.cpp
 src/LoadData.cpp
 src/VisualOdometry.cpp
 src/OdometryPublisher.cpp
+src/BundleAdjustment.cpp
+src/PointCloudPublisher.cpp
 )
 
 # First entry is the executable, the rest are dependencies
@@ -38,10 +46,14 @@ visual_odometry
 rclcpp
 std_msgs
 geometry_msgs
+sensor_msgs
 tf2
 OpenCV
 Eigen3
+#Ceres
 )
+# Only way ceres was discoverable
+target_link_libraries(visual_odometry ${CERES_LIBRARIES})
 
 # Include executable targets
 install(TARGETS
