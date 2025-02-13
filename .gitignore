@@ -2,6 +2,7 @@ vio_workspace/src/dataset
 vio_workspace/src/devkit
 vio_workspace/src/poses_dataset
 vio_workspace/src/sequences_dataset
+vio_workspace/src/data
 
 .DS_Store
 *.notes

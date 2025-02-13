@@ -41,9 +41,10 @@ void run_bundle_adjustment(std::vector<std::vector<cv::Point2f>>& observations_2
         indx++;
     }
     ceres::Solver::Options options;
-    options.linear_solver_type = ceres::SPARSE_NORMAL_CHOLESKY;
+    options.linear_solver_type = ceres::SPARSE_SCHUR; //ceres::SPARSE_NORMAL_CHOLESKY;
     options.minimizer_progress_to_stdout = false;
     options.max_num_iterations = 100;
+    options.num_threads = 4;
 
     ceres::Solver::Summary summary;
     ceres::Solve(options, &problem, &summary);

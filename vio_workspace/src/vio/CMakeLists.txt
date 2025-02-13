@@ -16,6 +16,7 @@ find_package(tf2 REQUIRED)
 # find_package(cv_bridge REQUIRED)
 find_package(OpenCV REQUIRED)
 find_package(Ceres REQUIRED)
+find_package(fastcdr REQUIRED)
 
 
 include_directories(
