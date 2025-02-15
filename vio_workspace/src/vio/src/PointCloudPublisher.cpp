@@ -30,8 +30,8 @@ output: void
         for (int i=0; i<observations_3d[matrix].rows(); i++){
             geometry_msgs::msg::Point32 pt_32 = geometry_msgs::msg::Point32();
             pt_32.x = observations_3d[matrix](i,0);
-            pt_32.y = observations_3d[matrix](i,2);
-            pt_32.z = observations_3d[matrix](i,1);
+            pt_32.y = observations_3d[matrix](i,1);
+            pt_32.z = observations_3d[matrix](i,2);
             pointcloud_points.emplace_back(pt_32);
         }
     }
