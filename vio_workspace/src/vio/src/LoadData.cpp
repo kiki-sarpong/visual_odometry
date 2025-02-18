@@ -122,7 +122,7 @@ std::vector<std::string> LoadData::load_images(std::string& file_path, int numbe
 
     int file_count = 0;
     int prefix = 1000000;
-    std::string post_fix = ".jpg"; // Image is a png file
+    std::string post_fix = ".png"; // Image is a png file
     std::string name;
 
     // Iterate through the files in the directory

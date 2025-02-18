@@ -75,12 +75,7 @@ void VisualOdometry::run_visual_odometry(){
     auto prev_time = cv::getTickCount();  // Get initial time count
     int i = 1;
 
-
-
     cv::Ptr<cv::SIFT> sift = cv::SIFT::create(5000);
-
-    
-
 
     // Main visual odometry iteration
     while (rclcpp::ok() && i < image_iter_size){
@@ -91,16 +86,16 @@ void VisualOdometry::run_visual_odometry(){
         cv::Mat curr_image = cv::imread(left_images[i], cv::IMREAD_GRAYSCALE);
 
         std::vector<cv::Point2f> prev_points, curr_points;  // Vectors to store the coordinates of the feature points
+        
+        
+        
+        ///zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
         // Create descriptors
         cv::Mat prev_descriptors, curr_descriptors;
-        
-        
 
         // Create keypoints
         std::vector<cv::KeyPoint> prev_keypoints, curr_keypoints;
-        
 
-        ///zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz
         sift->detectAndCompute(prev_image, cv::noArray(), prev_keypoints, prev_descriptors);
         sift->detectAndCompute(curr_image, cv::noArray(), curr_keypoints, curr_descriptors);
 
@@ -127,16 +122,7 @@ void VisualOdometry::run_visual_odometry(){
 
         RCLCPP_DEBUG(this->get_logger(), "Finished flanndetection detection.");
 
-        // Filter matches based on threshold
-        // for (size_t i = 0; i < matches.size(); ++i) {
-        //     const cv::DMatch& m = matches[i];
-        //     if (i + 1 < matches.size()) { 
-        //         const cv::DMatch& n = matches[i + 1];  // Assuming 'n' is the next match (second best)
-        //         if (m.distance < 0.7 * n.distance) {
-        //             good_matches.emplace_back(m);
-        //         }
-        //     }
-        // }
+
         std::vector<cv::DMatch> good_matches;  // Get good matches
         for(size_t i = 0; i < matches.size(); i++){
             const cv::DMatch& m = matches[i][0];
@@ -189,7 +175,6 @@ void VisualOdometry::run_visual_odometry(){
     
         // Get K(intrinsic) matrix from projection matrix
         // cv::Mat left_camera_K = VisualOdometry::decompose_matrix(calib_proj_matrix);
-        // cv::Mat left_camera_K = (cv::Mat_<double>(3,3) << 718.856, 0.0, 607.1928, 0.0, 718.856, 185.2157, 0.0,0.0,1.0);
         cv::Mat left_camera_K = (cv::Mat_<double>(3,3) << 2759.48, 0.0, 1520.69, 0.0, 2764.16, 1006.81, 0.0,0.0,1.0);
         // cv::Mat pj_matrix = (cv::Mat_<double>(3,4) << 1.0, 0.0, 0.0, 0.0, 
         //                                             0.0, 1.0, 0.0, 0.0, 
@@ -197,8 +182,10 @@ void VisualOdometry::run_visual_odometry(){
         // std::cout << pj_matrix << "\n";
 
         // Get essential matrix and inlier_mask
+        // essentialMatrix = cv::findEssentialMat(curr_points, prev_points, left_camera_K, cv::RANSAC, ransac_prob, 1.0, inlier_mask);
         essentialMatrix = cv::findEssentialMat(prev_points, curr_points, left_camera_K, cv::RANSAC, ransac_prob, 1.0, inlier_mask);
         // Get rotation and translation
+        // cv::recoverPose(essentialMatrix, curr_points, prev_points, left_camera_K, Rotation, Trans, inlier_mask);
         cv::recoverPose(essentialMatrix, prev_points, curr_points, left_camera_K, Rotation, Trans, inlier_mask);
         // Get scale information from ground truth
         double scale = VisualOdometry::get_scale(ground_truth, i);
@@ -228,7 +215,6 @@ void VisualOdometry::run_visual_odometry(){
             std::cout << prev_projection_matrix << "\n\n";
             std::cout << curr_projection_matrix << "\n\n";
             std::cout << "--------------------" << "\n";
-            std::cout << "here is the cv version" << CV_VERSION << "\n";
             // std::cout << prev_points << "\n";
 
             // for (int j =0; j < 200; j++){
@@ -256,6 +242,7 @@ void VisualOdometry::run_visual_odometry(){
             // test_prev.push_back(cv::Point2f(231.55942,55.260323));
 
 
+            // cv::triangulatePoints(prev_projection_matrix, curr_projection_matrix, prev_points, curr_points, points_4d);
             cv::triangulatePoints(prev_projection_matrix, curr_projection_matrix, prev_points, curr_points, points_4d);
             // std::cout << points_4d << "\n\n";
 
@@ -281,25 +268,30 @@ void VisualOdometry::run_visual_odometry(){
             // std::cout << points_4d << "\n\n";
 
 
-            //Convert Rotation matrix to axis angle. Axis angle is parameterized to 3 values here-> (x*theta,y*theta,z*theta)
-            Eigen::Vector3d axis_angle = VisualOdometry::rotation_to_axis_angle(prev_Rotation);
+            // Convert cv::Mat Rotation matrix to axis angle. Axis angle is parameterized to 3 values here-> (x*theta,y*theta,z*theta)
+            Eigen::MatrixXd eigen_rotation;
+            cv::cv2eigen(prev_Rotation, eigen_rotation);
+            double axis_angle[3];
+            ceres::RotationMatrixToAngleAxis<double>(eigen_rotation.data(), axis_angle);
+
+            // Find focal length
             double fx = left_camera_K.at<double>(0,0), fy = left_camera_K.at<double>(1,1);
             double focal_length = std::sqrt(fx*fx + fy*fy);
-            // Create camera pose vector. axis angle, translation, focal length
+
+            // Create camera pose vector = axis angle, translation, focal length
             Eigen::VectorXd c_poses(7);
             c_poses << axis_angle[0], axis_angle[1], axis_angle[2], prev_Trans.at<double>(0),
                     prev_Trans.at<double>(1), prev_Trans.at<double>(2), focal_length;
 
             // Append data for Bundle adjustment
-            // camera_poses.emplace_back(c_poses);  // Save camera pose
-            // observations_2d.emplace_back(curr_points);  // Save 2d features
+            camera_poses.emplace_back(c_poses);  // Save camera pose
+            observations_2d.emplace_back(curr_points);  // Save 2d features
             observations_3d.emplace_back(points_3d);  // Save 3d triangulated points
 
-
-            pointcloud_pub->call_publisher(observations_3d);
-        //     // std::vector<std::vector<cv::Point2f>> observations_2d;
-        // //     std::vector<Eigen::VectorXd> camera_poses;
-            std::vector<Eigen::Vector3d> observations_3d;
+            // pointcloud_pub->call_publisher(observations_3d);
+            // std::vector<std::vector<cv::Point2f>> observations_2d;
+            // std::vector<Eigen::VectorXd> camera_poses;
+            // std::vector<Eigen::MatrixXd> observations_3d;
 
 
         // }
@@ -307,36 +299,36 @@ void VisualOdometry::run_visual_odometry(){
 
 
         
-        // //----------------------------------------------------------------
-        // if (i % 10 == 0){  // For every x images, run the bundle adjustment
-        //     std::cout << observations_2d.size() << "\n";
-
-        //     // for (int n=0; n<observations_2d.size(); n++)
-
-        //     //     std::cout << camera_poses[n]<< "\n<----space----->\n";
-        //     //     std::cout << copy_poses[n]<< "\n\n";
-        //     // }
-
-
-        //     std::vector<Eigen::VectorXd> copy_poses = camera_poses;
-        //     auto st = cv::getTickCount();
-        //     RCLCPP_INFO(this->get_logger(), "Starting Bundle Adjustment!");
-        //     run_bundle_adjustment(observations_2d, observations_3d, camera_poses);
-        //     auto tt = (cv::getTickCount() - st)/cv::getTickFrequency(); // How much time to run BA
-        //     RCLCPP_INFO(this->get_logger(), ("Time_taken to run bundle adjustment(seconds): " + std::to_string(tt)).c_str());
-        //     pointcloud_pub->call_publisher(observations_3d);
-
-        //     // for (int n=0; n<observations_2d.size(); n++){
-        //     //     std::cout << camera_poses[n]<< "\n<----space----->\n";
-        //     //     std::cout << copy_poses[n]<< "\n\n";
-        //     // }
-            
-        //     // Reset variables
-        //     std::vector<std::vector<cv::Point2f>> observations_2d;
-        //     std::vector<Eigen::VectorXd> camera_poses;
-        //     std::vector<Eigen::Vector3d> observations_3d;
-        // }
         //----------------------------------------------------------------
+        if (i % 2 == 0){  // For every x images, run the bundle adjustment
+            std::cout << observations_2d.size() << "\n";
+
+            // for (int n=0; n<observations_2d.size(); n++)
+
+            //     std::cout << camera_poses[n]<< "\n<----space----->\n";
+            //     std::cout << copy_poses[n]<< "\n\n";
+            // }
+
+
+            std::vector<Eigen::VectorXd> copy_poses = camera_poses;
+            auto st = cv::getTickCount();
+            RCLCPP_INFO(this->get_logger(), "Starting Bundle Adjustment!");
+            run_bundle_adjustment(observations_2d, observations_3d, camera_poses);
+            auto tt = (cv::getTickCount() - st)/cv::getTickFrequency(); // How much time to run BA
+            RCLCPP_INFO(this->get_logger(), ("Time_taken to run bundle adjustment(seconds): " + std::to_string(tt)).c_str());
+            pointcloud_pub->call_publisher(observations_3d);
+
+            // for (int n=0; n<observations_2d.size(); n++){
+            //     std::cout << camera_poses[n]<< "\n<----space----->\n";
+            //     std::cout << copy_poses[n]<< "\n\n";
+            // }
+            
+            // Reset variables
+            std::vector<std::vector<cv::Point2f>> observations_2d;
+            std::vector<Eigen::VectorXd> camera_poses;
+            std::vector<Eigen::MatrixXd> observations_3d;
+        }
+        // // ----------------------------------------------------------------
         // std::cout << "2d points: " << curr_points.size() << "\n";
         // std::cout << "3d points: " << points_3d.size() << "\n\n";
 
@@ -449,20 +441,14 @@ output: points in 3d
 */
 Eigen::MatrixXd VisualOdometry::points_4d_to_3d(cv::Mat& points_4d){
     // The points_4d array is flipped. It is row(x,y,z,w) * column(all points)
-    // cv::Mat last_col; 
-    // cv::transpose(points_4d.row(3), last_col);  // Get last row which W
-    // cv::Mat points_3d(points_4d.cols, 3, CV_32F); // Create matrix with 3 columns
-    // for (int i=0; i < 3; i++){
-    //     cv::transpose(points_4d.row(i), points_3d.col(i));
-    //     points_3d.col(i) = points_3d.col(i).mul((1/last_col)); // Divide by last column
-    // }
+
     // Convert datatype to Eigen matrixXd
     Eigen::MatrixXd p3d;
     p3d = Eigen::MatrixXd(points_4d.cols, 3);
     // cv::cv2eigen(points_3d, p3d);
 
-
     for (int i=0; i<points_4d.cols; i++){
+        // Use <float> instead of <double>. cv::point2f.. <double> gives wrong values
        double x = points_4d.at<float>(0,i);
        double y = points_4d.at<float>(1,i);
        double z = points_4d.at<float>(2,i);
@@ -481,21 +467,21 @@ Eigen::MatrixXd VisualOdometry::points_4d_to_3d(cv::Mat& points_4d){
 
 
 /*
-This method is used to convert a rotation to an axis angle
-input: 3x3 Rotation matrix
-output: 1x3 eigen vector
-*/
-Eigen::Vector3d VisualOdometry::rotation_to_axis_angle(const cv::Mat& R){
-    cv::Mat W = (R - R.t()) * 0.5; 
+// This method is used to convert a rotation to an axis angle
+// input: 3x3 Rotation matrix
+// output: 1x3 eigen vector
+// */
+// Eigen::Vector3d VisualOdometry::rotation_to_axis_angle(const cv::Mat& R){
+//     cv::Mat W = (R - R.t()) * 0.5; 
 
-    // Extract rotation axis
-    double wx = W.at<double>(2, 1);
-    double wy = W.at<double>(0, 2);   
-    double wz = W.at<double>(1, 0);
-    Eigen::Vector3d axis(wx, wy, wz);
+//     // Extract rotation axis
+//     double wx = W.at<float>(2, 1);
+//     double wy = W.at<float>(0, 2);   
+//     double wz = W.at<float>(1, 0);
+//     Eigen::Vector3d axis(wx, wy, wz);
 
-    // Calculate rotation angle
-    double angle = std::acos((cv::sum(R.diag())[0] - 1.0) / 2.0);
+//     // Calculate rotation angle
+//     double angle = std::acos((cv::sum(R.diag())[0] - 1.0) / 2.0);
 
-    return angle * axis; // Return axis-angle representation
-}
+//     return angle * axis; // Return axis-angle representation
+// }
