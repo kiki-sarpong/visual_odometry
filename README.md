@@ -23,7 +23,7 @@ rviz2
 ## Results
 Results for monocular visual odometry on KITTI dataset 00 && 03.</br>
 Generated odometry works well but subject to heavy drift over time.</br>
-**Currently working on Bundle Adjustment to minimize reprojection errors**
+**Adding Bundle Adjustment can be used to minimize reprojection errors**
 
 Red->ground truth.</br>
 Green->generated odometry.
