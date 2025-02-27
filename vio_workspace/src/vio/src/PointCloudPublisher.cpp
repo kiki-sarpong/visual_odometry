@@ -20,20 +20,18 @@ This method calls the visual odometry publisher.
 input: a vector of 3d observations
 output: void
 */
- void PointCloudPublisher::call_publisher(std::vector<Eigen::MatrixXd>& observations_3d){
+ void PointCloudPublisher::call_publisher(Eigen::MatrixXd& observations_3d){
     auto point_cloud_msg = sensor_msgs::msg::PointCloud(); 
     point_cloud_msg.header.stamp = main_node->get_clock()->now();
     point_cloud_msg.header.frame_id = map;
 
     // Assign all the observation points to a pointcloud
-    for (int matrix=0; matrix<observations_3d.size(); matrix++){
-        for (int i=0; i<observations_3d[matrix].rows(); i++){
-            geometry_msgs::msg::Point32 pt_32 = geometry_msgs::msg::Point32();
-            pt_32.x = observations_3d[matrix](i,0);
-            pt_32.y = observations_3d[matrix](i,1);
-            pt_32.z = observations_3d[matrix](i,2);
-            pointcloud_points.emplace_back(pt_32);
-        }
+    for (int i=0; i<observations_3d.rows(); i++){
+        geometry_msgs::msg::Point32 pt_32 = geometry_msgs::msg::Point32();
+        pt_32.x = observations_3d(i,0);
+        pt_32.y = observations_3d(i,1);
+        pt_32.z = observations_3d(i,2);
+        pointcloud_points.emplace_back(pt_32);
     }
 
     // Assign array of point32 points 

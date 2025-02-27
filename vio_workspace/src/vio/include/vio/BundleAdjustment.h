@@ -47,16 +47,16 @@ class BundleAdjustment{
             return true;
         }
 
-        ~BundleAdjustment(){}; // Destructor
+        // ~BundleAdjustment(){}; // Destructor
 
     private:
         double observed_x, observed_y;
-        Eigen::Matrix3d intrinsics;
+        // Eigen::Matrix3d intrinsics;
 };
 
 
-void run_bundle_adjustment(std::vector<std::vector<cv::Point2f>>& observations_2d, std::vector<Eigen::MatrixXd>& observations_3d,
- std::vector<Eigen::VectorXd>& camera_poses);
+void run_bundle_adjustment(std::vector<cv::Point2f>& observations_2d, Eigen::MatrixXd& observations_3d, 
+    std::vector<Eigen::VectorXd>& camera_poses, std::vector<int>& camera_indices);
 
 
 #endif  /* _BUNDLE_ADJUSTMENT_H */

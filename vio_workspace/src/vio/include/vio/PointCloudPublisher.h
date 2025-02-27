@@ -12,7 +12,7 @@ class PointCloudPublisher{
     public:
         // Pass main node into publisher
         PointCloudPublisher(VisualOdometry* main_node_, std::string tp_name);
-        void call_publisher(std::vector<Eigen::MatrixXd>& observations_3d);
+        void call_publisher(Eigen::MatrixXd& observations_3d);
         
     private:
         // Create publisher
