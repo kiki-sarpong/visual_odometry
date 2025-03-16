@@ -72,3 +72,21 @@ void run_bundle_adjustment(std::vector<cv::Point2f>& observations_2d, Eigen::Mat
         // std::cout << observations_3d << "\n";
 
 }
+
+
+/*
+
+
+// Building the ceres problem
+std::vector<Track> tracks; // You need to fill this
+for(const auto& track:tracks){
+
+for(size_t idx=0;idx<track.observations;++idx){
+	const auto& obs = track.observations[idx];
+	const auto frame_id = track.camera_index[idx];
+    BundleAdjustment* b_adj_ptr = new BundleAdjustment(obs.x/*x*/, obs.y/*y*/);
+    cost_function = new ceres::AutoDiffCostFunction<BundleAdjustment, points_2d_size, cam_size, points_3d_size>(b_adj_ptr);
+    problem.AddResidualBlock(cost_function, nullptr/*squared_loss*/, camera_poses[frame_id].data(), track.pt3d.data());
+    }
+}
+*/

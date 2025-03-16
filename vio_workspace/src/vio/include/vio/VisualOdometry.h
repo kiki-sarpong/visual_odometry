@@ -44,5 +44,14 @@ class VisualOdometry : public rclcpp::Node {
         
 };
 
+/*
+Object to track the 3d points and their associations.
+*/
+struct Track_3d{
+    Eigen::Vector3d pt3d; // The 3D triangulated point.
+    std::vector<cv::Point2f> observations; // The 2D image observations that relate to this 3D point;
+    std::vector<int> camera_index; // Index of which camera had the observation. Same size as observations.
+};
+
 
 #endif /* _VISUAL_ODOMETRY_H */

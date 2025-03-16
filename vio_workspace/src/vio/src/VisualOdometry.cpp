@@ -305,8 +305,8 @@ void VisualOdometry::run_visual_odometry(){
             camera_poses.push_back(VisualOdometry::rotation_to_axis_angle(prev_R_and_T, left_camera_K));
             camera_poses.push_back(VisualOdometry::rotation_to_axis_angle(curr_R_and_T, left_camera_K));
 
-            std::cout << "number of 2d_observations " << camera_indices.size()/2 <<"\n";
-            std::cout << "number of camera_indices " << observations_2d.size()/2 <<"\n";
+            std::cout << "number of camera_indices " << camera_indices.size()/2 <<"\n";
+            std::cout << "number of 2d_observations " << observations_2d.size()/2 <<"\n";
             std::cout << "number of 3d_points " << observations_3d.size()/3 <<"\n";
             std::cout << "number of camera_poses " << camera_poses.size() <<"\n";
             ///----------////
