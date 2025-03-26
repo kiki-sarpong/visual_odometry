@@ -126,52 +126,50 @@ void VisualOdometry::run_visual_odometry(){
             prev_Trans = prev_Trans + /*scale*/(prev_Rotation*Trans);
             prev_Rotation = Rotation*prev_Rotation;
 
-            
-
             // Create 3 x 4 matrix from rotation and translation
             curr_R_and_T = VisualOdometry::create_R_and_T_matrix(prev_Rotation, prev_Trans);
 
-            // Get projection matrix by Intrisics x [R|t]
-            cv::Mat prev_projection_matrix = left_camera_K * prev_R_and_T;
-            cv::Mat curr_projection_matrix = left_camera_K * curr_R_and_T;
+            // // Get projection matrix by Intrisics x [R|t]
+            // cv::Mat prev_projection_matrix = left_camera_K * prev_R_and_T;
+            // cv::Mat curr_projection_matrix = left_camera_K * curr_R_and_T;
 
             // Triangulate points 2D points to 3D. cv.triangulatePoints gives 4D coordinates. X Y Z W. 
             // Divide XYZ by W to get 3d coordinates 
-            cv::Mat points_4d;
-            cv::triangulatePoints(prev_projection_matrix, curr_projection_matrix, prev_points, curr_points, points_4d);
-            Eigen::MatrixXd points_3d = VisualOdometry::points_4d_to_3d(points_4d);
+            // cv::Mat points_4d;
+            // cv::triangulatePoints(prev_projection_matrix, curr_projection_matrix, prev_points, curr_points, points_4d);
+            // Eigen::MatrixXd points_3d = VisualOdometry::points_4d_to_3d(points_4d);
 
-            // Axis angle is parameterized to 3 values here-> (x*theta,y*theta,z*theta)
-            Eigen::Vector3d axis_angle = VisualOdometry::rotation_to_axis_angle(prev_Rotation);
-            double fx = left_camera_K.at<double>(0,0), fy = left_camera_K.at<double>(1,1);
-            double focal_length = std::sqrt(fx*fx + fy*fy);
-            // Create camera pose vector. axis angle, translation, focal length
-            Eigen::VectorXd c_poses(7);
-            c_poses << axis_angle[0], axis_angle[1], axis_angle[2], prev_Trans.at<double>(0),
-                    prev_Trans.at<double>(1), prev_Trans.at<double>(2), focal_length;
+            // // Axis angle is parameterized to 3 values here-> (x*theta,y*theta,z*theta)
+            // Eigen::Vector3d axis_angle = VisualOdometry::rotation_to_axis_angle(prev_Rotation);
+            // double fx = left_camera_K.at<double>(0,0), fy = left_camera_K.at<double>(1,1);
+            // double focal_length = std::sqrt(fx*fx + fy*fy);
+            // // Create camera pose vector. axis angle, translation, focal length
+            // Eigen::VectorXd c_poses(7);
+            // c_poses << axis_angle[0], axis_angle[1], axis_angle[2], prev_Trans.at<double>(0),
+            //         prev_Trans.at<double>(1), prev_Trans.at<double>(2), focal_length;
 
             // Append data for Bundle adjustment
-            camera_poses.emplace_back(c_poses);  // Save camera pose
-            observations_2d.emplace_back(curr_points);  // Save 2d features
-            observations_3d.emplace_back(points_3d);  // Save 3d triangulated points
+            // camera_poses.emplace_back(c_poses);  // Save camera pose
+            // observations_2d.emplace_back(curr_points);  // Save 2d features
+            // observations_3d.emplace_back(points_3d);  // Save 3d triangulated points
         }
         
         
 
-        if (i % 10 == 0){  // For every x images, run the bundle adjustment
-            auto st = cv::getTickCount();
-            RCLCPP_INFO(this->get_logger(), "Starting Bundle Adjustment!");
-            run_bundle_adjustment(observations_2d, observations_3d, camera_poses);
-            auto tt = (cv::getTickCount() - st)/cv::getTickFrequency(); // How much time to run BA
-            RCLCPP_INFO(this->get_logger(),("Time_taken to run bundle adjustment(seconds): " + std::to_string(tt)).c_str());
-            pointcloud_pub->call_publisher(observations_3d);
+        // if (i % 10 == 0){  // For every x images, run the bundle adjustment
+        //     auto st = cv::getTickCount();
+        //     RCLCPP_INFO(this->get_logger(), "Starting Bundle Adjustment!");
+        //     run_bundle_adjustment(observations_2d, observations_3d, camera_poses);
+        //     auto tt = (cv::getTickCount() - st)/cv::getTickFrequency(); // How much time to run BA
+        //     RCLCPP_INFO(this->get_logger(),("Time_taken to run bundle adjustment(seconds): " + std::to_string(tt)).c_str());
+        //     pointcloud_pub->call_publisher(observations_3d);
             
-            // Reset variables
-            std::vector<std::vector<cv::Point2f>> observations_2d;
-            std::vector<Eigen::VectorXd> camera_poses;
-            std::vector<Eigen::Vector3d> observations_3d;
+        //     // Reset variables
+        //     std::vector<std::vector<cv::Point2f>> observations_2d;
+        //     std::vector<Eigen::VectorXd> camera_poses;
+        //     std::vector<Eigen::Vector3d> observations_3d;
 
-        }
+        // }
 
         // std::cout << "2d points: " << curr_points.size() << "\n";
         // std::cout << "3d points: " << points_3d.size() << "\n\n";
