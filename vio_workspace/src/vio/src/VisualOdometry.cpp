@@ -123,7 +123,7 @@ void VisualOdometry::run_visual_odometry(){
 
         // Allow only forward motion and reject any sideways motion. Update pose information
         if ((scale > 0.1) && (Trans.at<double>(2) > Trans.at<double>(0)) && (Trans.at<double>(2) > Trans.at<double>(1))){
-            prev_Trans = prev_Trans + /*scale*/(prev_Rotation*Trans);
+            prev_Trans = prev_Trans + scale*(prev_Rotation*Trans);
             prev_Rotation = Rotation*prev_Rotation;
 
             // Create 3 x 4 matrix from rotation and translation
@@ -282,21 +282,21 @@ This method converts the 4d triangulated points into 3d
 input: points in 4d -> row(x,y,z,w) * column(all points)
 output: points in 3d
 */
-Eigen::MatrixXd VisualOdometry::points_4d_to_3d(cv::Mat& points_4d){
-    // The points_4d array is flipped. It is row(x,y,z,w) * column(all points)
-    cv::Mat last_col; 
-    cv::transpose(points_4d.row(3), last_col);  // Get last row which W
-    cv::Mat points_3d(points_4d.cols, 3, CV_32F); // Create matrix with 3 columns
-    for (int i=0; i < 3; i++){
-        cv::transpose(points_4d.row(i), points_3d.col(i));
-        points_3d.col(i) = points_3d.col(i).mul((1/last_col)); // Divide by last column
-    }
-    // Convert datatype to Eigen matrixXd
-    Eigen::MatrixXd p3d;
-    cv::cv2eigen(points_3d, p3d);
+// Eigen::MatrixXd VisualOdometry::points_4d_to_3d(cv::Mat& points_4d){
+//     // The points_4d array is flipped. It is row(x,y,z,w) * column(all points)
+//     cv::Mat last_col; 
+//     cv::transpose(points_4d.row(3), last_col);  // Get last row which W
+//     cv::Mat points_3d(points_4d.cols, 3, CV_32F); // Create matrix with 3 columns
+//     for (int i=0; i < 3; i++){
+//         cv::transpose(points_4d.row(i), points_3d.col(i));
+//         points_3d.col(i) = points_3d.col(i).mul((1/last_col)); // Divide by last column
+//     }
+//     // Convert datatype to Eigen matrixXd
+//     Eigen::MatrixXd p3d;
+//     cv::cv2eigen(points_3d, p3d);
 
-    return p3d;
-}
+//     return p3d;
+// }
 
 
 /*
@@ -304,17 +304,17 @@ This method is used to convert a rotation to an axis angle
 input: 3x3 Rotation matrix
 output: 1x3 eigen vector
 */
-Eigen::Vector3d VisualOdometry::rotation_to_axis_angle(const cv::Mat& R){
-    cv::Mat W = (R - R.t()) * 0.5; 
+// Eigen::Vector3d VisualOdometry::rotation_to_axis_angle(const cv::Mat& R){
+//     cv::Mat W = (R - R.t()) * 0.5; 
 
-    // Extract rotation axis
-    double wx = W.at<double>(2, 1);
-    double wy = W.at<double>(0, 2);   
-    double wz = W.at<double>(1, 0);
-    Eigen::Vector3d axis(wx, wy, wz);
+//     // Extract rotation axis
+//     double wx = W.at<double>(2, 1);
+//     double wy = W.at<double>(0, 2);   
+//     double wz = W.at<double>(1, 0);
+//     Eigen::Vector3d axis(wx, wy, wz);
 
-    // Calculate rotation angle
-    double angle = std::acos((cv::sum(R.diag())[0] - 1.0) / 2.0);
+//     // Calculate rotation angle
+//     double angle = std::acos((cv::sum(R.diag())[0] - 1.0) / 2.0);
 
-    return angle * axis; // Return axis-angle representation
-}
+//     return angle * axis; // Return axis-angle representation
+// }
